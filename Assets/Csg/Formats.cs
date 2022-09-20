@@ -29,12 +29,12 @@ namespace Csg
 
 		public static void WriteStl(this Polygon polygon, TextWriter writer)
 		{
-			if (polygon.Vertices.Count >= 3)
+            if (polygon.Vertices.Length >= 3)
 			{
 				var firstVertexStl = polygon.Vertices[0].ToStlString();
-				for (var i = 0; i < polygon.Vertices.Count - 2; i++)
+                for (var i = 0; i < polygon.Vertices.Length - 2; i++)
 				{
-					writer.WriteLine("facet normal " + polygon.Plane.Normal.ToStlString());
+					writer.WriteLine("facet normal " + polygon.Plane.normal.ToStlString());
 					writer.WriteLine("outer loop");
 					writer.WriteLine(firstVertexStl);
 					writer.WriteLine(polygon.Vertices[i + 1].ToStlString());

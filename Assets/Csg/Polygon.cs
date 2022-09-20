@@ -11,73 +11,73 @@ namespace Csg
 	/// </summary>
 	public class Polygon
 	{
-		public readonly List<Vertex> Vertices;
+        public readonly Vertex[] Vertices;
 		public readonly Plane Plane;
-		public readonly PolygonShared Shared;
+        public Color PolygonColor;
 
-		readonly bool debug = false;
+        private bool BoundingSphereIsCached;
+        private bool BoundingBoxIsCached;
+        BoundingSphere cachedBoundingSphere;
+        Bounds cachedBoundingBox;
 
-		static readonly PolygonShared defaultShared = new PolygonShared(null!);
-
-		BoundingSphere? cachedBoundingSphere;
-		BoundingBox? cachedBoundingBox;
-
-		public Polygon(List<Vertex> vertices, PolygonShared? shared = null, Plane? plane = null)
+        public Polygon(Color SolidColor, Vertex[] Vertices, Plane plane)
 		{
-			Vertices = vertices;
-			Shared = shared ?? defaultShared;
-			Plane = plane ?? Plane.FromVector3s(vertices[0].Pos, vertices[1].Pos, vertices[2].Pos);
-			if (debug)
-			{
+            this.Vertices = Vertices;
+            Plane = plane;
+            this.PolygonColor = SolidColor;
 				//CheckIfConvex();
 			}
-		}
 
-		public Polygon(params Vertex[] vertices)
-			: this(new List<Vertex>(vertices))
+        public Polygon(Color SolidColor, params Vertex[] Vertices)
 		{
+            this.Vertices = Vertices;
+            Plane = CSGHelper.FromVector3s(Vertices[0].Pos, Vertices[1].Pos, Vertices[2].Pos);
+            this.PolygonColor = SolidColor;
 		}
 
 		public BoundingSphere BoundingSphere
 		{
 			get
 			{
-				if (cachedBoundingSphere == null)
+                if (!BoundingSphereIsCached)
 				{
+                    BoundingSphereIsCached = true;
 					var box = BoundingBox;
-					var middle = (box.Min + box.Max) * 0.5f;
-					var radius3 = box.Max - middle;
+					var middle = (box.min + box.max) * 0.5f;
+					var radius3 = box.max - middle;
 					var radius = radius3.magnitude;
-					cachedBoundingSphere = new BoundingSphere { Center = middle, Radius = radius };
+					cachedBoundingSphere = new BoundingSphere { position = middle, radius = radius };
 				}
 				return cachedBoundingSphere;
 			}
 		}
 
-		public BoundingBox BoundingBox
+		public Bounds BoundingBox
 		{
 			get
 			{
-				if (cachedBoundingBox == null)
+                if (!BoundingBoxIsCached)
 				{
+                    BoundingBoxIsCached = true;
 					Vector3 minpoint, maxpoint;
-					var vertices = this.Vertices;
-					var numvertices = vertices.Count;
+                    Vertex[] vertices = this.Vertices;
+                    int numvertices = vertices.Length;
 					if (numvertices == 0)
 					{
 						minpoint = new Vector3(0, 0, 0);
 					}
-					else {
+                    else
+                    {
 						minpoint = vertices[0].Pos;
 					}
 					maxpoint = minpoint;
 					for (var i = 1; i < numvertices; i++)
 					{
 						var point = vertices[i].Pos;
-						minpoint = Utils.Min(minpoint, point);
-						maxpoint = Utils.Max(maxpoint, point);
+						minpoint = Vector3.Min(minpoint, point);
+						maxpoint = Vector3.Max(maxpoint, point);
 					}
-					cachedBoundingBox = new BoundingBox(minpoint, maxpoint);
+					cachedBoundingBox = new Bounds(minpoint, maxpoint);
 				}
 				return cachedBoundingBox;
 			}
@@ -85,65 +85,16 @@ namespace Csg
 
 		public Polygon Flipped()
 		{
-			var newvertices = new List<Vertex>(Vertices.Count);
-			for (int i = 0; i < Vertices.Count; i++)
+            Vertex[] ArrayNewVertex = new Vertex[Vertices.Length];
+            for (int i = 0; i < Vertices.Length; i++)
 			{
-				newvertices.Add(Vertices[i].Flipped());
+                ArrayNewVertex[Vertices.Length - i - 1] = Vertices[i].Flipped();
 			}
-			newvertices.Reverse();
-			var newplane = Plane.Flipped();
-			return new Polygon(newvertices, Shared, newplane);
+            Plane newplane = Plane.Flipped();
+            return new Polygon(PolygonColor, ArrayNewVertex, newplane);
 		}
-	}
 
-	public class PolygonShared
-	{
-		int tag = 0;
-		public int Tag {
-			get {
-				if (tag == 0) {
-					tag = Solid.GetTag ();
 				}
-				return tag;
-			}
-		}
-		public PolygonShared(object color)
-		{			
-		}
-		public string Hash
-		{
-			get
-			{
-				return "null";
-			}
-		}
-	}
 
-	public class Properties
-	{
-		public readonly Dictionary<string, object> All = new Dictionary<string, object>();
-		public Properties Merge(Properties otherproperties)
-		{
-			var result = new Properties();
-			foreach (var x in All)
-			{
-				result.All.Add(x.Key, x.Value);
-			}
-			foreach (var x in otherproperties.All)
-			{
-				result.All[x.Key] = x.Value;
-			}
-			return result;
-		}
-		public Properties Transform(Matrix4x4 matrix4x4)
-		{
-			var result = new Properties();
-			foreach (var x in All)
-			{
-				result.All.Add(x.Key, x.Value);
-			}
-			return result;
-		}
-	}
 }
 

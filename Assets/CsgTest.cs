@@ -73,7 +73,7 @@ public class CsgTest : TestBase
             {
                 vertices.Add(new Vector3((float)v.Pos.x, (float)v.Pos.y, (float)v.Pos.z));
             }
-            faces.Add(Enumerable.Range(firstVertIndex, poly.Vertices.Count).ToList());
+            faces.Add(Enumerable.Range(firstVertIndex, poly.Vertices.Length).ToList());
         }
 
         poly = new PolyMesh(vertices, faces);
@@ -96,7 +96,7 @@ public class CsgTest : TestBase
         List<Polygon> polygons = new List<Polygon>();
         foreach (var face in poly.Faces)
         {
-            Polygon polygon = new Polygon(
+            Polygon polygon = new Polygon(Color.white,
                 face.GetVertices().Select(v=>
                 {
                     return NoTexVertex(new Vector3(

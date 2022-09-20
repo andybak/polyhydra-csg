@@ -2,7 +2,7 @@
 
 namespace Csg
 {
-    public class Vertex
+    public struct Vertex
     {
         /// <summary>
         /// The world position of this vertex.
@@ -14,7 +14,6 @@ namespace Csg
         /// </summary>
 		public readonly Vector2 Tex;
 
-        int tag = 0;
 
         /// <summary>
         /// Initializes a new <see cref="T:Csg.Vertex"/> at a given position and with a given texture coordinate.
@@ -25,21 +24,10 @@ namespace Csg
         {
             Pos = pos;
 			Tex = tex;
-        }
 
         /// <summary>
         /// A unique id for this vertex.
         /// </summary>
-        public int Tag
-        {
-            get
-            {
-                if (tag == 0)
-                {
-                    tag = Solid.GetTag();
-                }
-                return tag;
-            }
         }
 
         /// <summary>
