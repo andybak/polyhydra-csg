@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Csg
 {
@@ -25,7 +26,7 @@ namespace Csg
 		{
 			Vertices = vertices;
 			Shared = shared ?? defaultShared;
-			Plane = plane ?? Plane.FromVector3Ds(vertices[0].Pos, vertices[1].Pos, vertices[2].Pos);
+			Plane = plane ?? Plane.FromVector3s(vertices[0].Pos, vertices[1].Pos, vertices[2].Pos);
 			if (debug)
 			{
 				//CheckIfConvex();
@@ -44,9 +45,9 @@ namespace Csg
 				if (cachedBoundingSphere == null)
 				{
 					var box = BoundingBox;
-					var middle = (box.Min + box.Max) * 0.5;
+					var middle = (box.Min + box.Max) * 0.5f;
 					var radius3 = box.Max - middle;
-					var radius = radius3.Length;
+					var radius = radius3.magnitude;
 					cachedBoundingSphere = new BoundingSphere { Center = middle, Radius = radius };
 				}
 				return cachedBoundingSphere;
@@ -59,12 +60,12 @@ namespace Csg
 			{
 				if (cachedBoundingBox == null)
 				{
-					Vector3D minpoint, maxpoint;
+					Vector3 minpoint, maxpoint;
 					var vertices = this.Vertices;
 					var numvertices = vertices.Count;
 					if (numvertices == 0)
 					{
-						minpoint = new Vector3D(0, 0, 0);
+						minpoint = new Vector3(0, 0, 0);
 					}
 					else {
 						minpoint = vertices[0].Pos;
@@ -73,8 +74,8 @@ namespace Csg
 					for (var i = 1; i < numvertices; i++)
 					{
 						var point = vertices[i].Pos;
-						minpoint = minpoint.Min(point);
-						maxpoint = maxpoint.Max(point);
+						minpoint = Utils.Min(minpoint, point);
+						maxpoint = Utils.Max(maxpoint, point);
 					}
 					cachedBoundingBox = new BoundingBox(minpoint, maxpoint);
 				}

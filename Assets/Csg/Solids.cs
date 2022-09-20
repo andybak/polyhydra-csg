@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Csg
 {
@@ -9,19 +10,19 @@ namespace Csg
 		public static Solid Cube(CubeOptions options)
 		{
 			var c = options.Center;
-			var r = options.Radius.Abs; // negative radii make no sense
-			if (r.X == 0.0 || r.Y == 0.0 || r.Z == 0.0)
+			var r = Utils.Abs(options.Radius); // negative radii make no sense
+			if (r.x == 0.0 || r.y == 0.0 || r.z == 0.0)
 				return new Solid();
 			var result = Solid.FromPolygons(cubeData.Select(info =>
 			{
-				//var normal = new Vector3D(info[1]);
+				//var normal = new Vector3(info[1]);
 				//var plane = new Plane(normal, 1);
 				var vertices = info[0].Select(i =>
 				{
-					var pos = new Vector3D(
-						c.X + r.X * (2 * ((i & 1) != 0 ? 1 : 0) - 1),
-							c.Y + r.Y * (2 * ((i & 2) != 0 ? 1 : 0) - 1),
-							c.Z + r.Z * (2 * ((i & 4) != 0 ? 1 : 0) - 1));
+					var pos = new Vector3(
+						c.x + r.x * (2 * ((i & 1) != 0 ? 1 : 0) - 1),
+							c.y + r.y * (2 * ((i & 2) != 0 ? 1 : 0) - 1),
+							c.z + r.z * (2 * ((i & 4) != 0 ? 1 : 0) - 1));
 					return NoTexVertex(pos);
 				});
 				return new Polygon(vertices.ToList());
@@ -29,45 +30,45 @@ namespace Csg
 			return result;
 		}
 
-		public static Solid Cube(double size = 1, bool center = false)
+		public static Solid Cube(float size = 1, bool center = false)
 		{
-			var r = new Vector3D(size / 2, size / 2, size / 2);
-			var c = center ? new Vector3D(0, 0, 0) : r;
+			var r = new Vector3(size / 2, size / 2, size / 2);
+			var c = center ? new Vector3(0, 0, 0) : r;
 			return Solids.Cube(new CubeOptions { Radius = r, Center = c });
 		}
 
-		public static Solid Cube(double size, Vector3D center)
+		public static Solid Cube(float size, Vector3 center)
 		{
-			var r = new Vector3D(size / 2, size / 2, size / 2);
+			var r = new Vector3(size / 2, size / 2, size / 2);
 			var c = center;
 			return Solids.Cube(new CubeOptions { Radius = r, Center = c });
 		}
 
-		public static Solid Cube(Vector3D size, bool center = false)
+		public static Solid Cube(Vector3 size, bool center = false)
 		{
 			var r = size / 2;
-			var c = center ? new Vector3D(0, 0, 0) : r;
+			var c = center ? new Vector3(0, 0, 0) : r;
 			return Solids.Cube(new CubeOptions { Radius = r, Center = c });
 		}
 
-		public static Solid Cube(Vector3D size, Vector3D center)
+		public static Solid Cube(Vector3 size, Vector3 center)
 		{
 			var r = size / 2;
 			var c = center;
 			return Solids.Cube(new CubeOptions { Radius = r, Center = c });
 		}
 
-		public static Solid Cube(double width, double height, double depth, bool center = false)
+		public static Solid Cube(float width, float height, float depth, bool center = false)
 		{
-			var r = new Vector3D(width/2, height/2, depth/2);
-			var c = center ? new Vector3D(0, 0, 0) : r;
+			var r = new Vector3(width/2, height/2, depth/2);
+			var c = center ? new Vector3(0, 0, 0) : r;
 			return Solids.Cube(new CubeOptions { Radius = r, Center = c });
 		}
 
 		public static Solid Sphere(SphereOptions options)
 		{
 			var center = options.Center;
-			var radius = Math.Abs(options.Radius);
+			var radius = Mathf.Abs(options.Radius);
 			if (radius == 0.0)
 				return new Solid();
 			var resolution = options.Resolution;
@@ -76,20 +77,20 @@ namespace Csg
 			var zvector = options.ZAxis * radius;
 			if (resolution < 4) resolution = 4;
 			var qresolution = resolution / 4;
-			var prevcylinderpoint = new Vector3D(0,0,0);
+			var prevcylinderpoint = new Vector3(0,0,0);
 			var polygons = new List<Polygon>();
 			for (var slice1 = 0; slice1 <= resolution; slice1++)
 			{
-				var angle = Math.PI * 2.0 * slice1 / resolution;
-				var cylinderpoint = xvector * (Math.Cos(angle)) + (yvector * (Math.Sin(angle)));
+				var angle = Mathf.PI * 2.0f * slice1 / resolution;
+				var cylinderpoint = xvector * (Mathf.Cos(angle)) + (yvector * (Mathf.Sin(angle)));
 				if (slice1 > 0)
 				{
-					double prevcospitch = 0, prevsinpitch = 0;
+					float prevcospitch = 0, prevsinpitch = 0;
 					for (var slice2 = 0; slice2 <= qresolution; slice2++)
 					{
-						var pitch = 0.5 * Math.PI * (double)slice2 / qresolution;
-						var cospitch = Math.Cos(pitch);
-						var sinpitch = Math.Sin(pitch);
+						var pitch = 0.5f * Mathf.PI * slice2 / qresolution;
+						var cospitch = Mathf.Cos(pitch);
+						var sinpitch = Mathf.Sin(pitch);
 						if (slice2 > 0)
 						{
 							var vertices = new List<Vertex>();
@@ -122,13 +123,13 @@ namespace Csg
 			return result;
 		}
 
-		public static Solid Sphere(double r = 1, bool center = true)
+		public static Solid Sphere(float r = 1, bool center = true)
 		{
-			var c = center ? new Vector3D(0, 0, 0) : new Vector3D(r, r, r);
+			var c = center ? new Vector3(0, 0, 0) : new Vector3(r, r, r);
 			return Solids.Sphere(new SphereOptions { Radius = r, Center = c });
 		}
 
-		public static Solid Sphere(double r, Vector3D center)
+		public static Solid Sphere(float r, Vector3 center)
 		{
 			return Solids.Sphere(new SphereOptions { Radius = r, Center = center });
 		}
@@ -137,8 +138,8 @@ namespace Csg
 		{
 			var s = options.Start;
 			var e = options.End;
-			var r = Math.Abs(options.RadiusStart);
-			var rEnd = Math.Abs(options.RadiusEnd);
+			var r = Mathf.Abs(options.RadiusStart);
+			var rEnd = Mathf.Abs(options.RadiusEnd);
 			var rStart = r;
 			var alpha = options.SectorAngle;
 			alpha = alpha > 360 ? alpha % 360 : alpha;
@@ -154,19 +155,19 @@ namespace Csg
 
 			var slices = options.Resolution;
 			var ray = e - (s);
-			var axisZ = ray.Unit;
-			var axisX = axisZ.RandomNonParallelVector().Unit;
+			var axisZ = ray.normalized;
+			var axisX = Utils.RandomNonParallelVector(axisZ).normalized;
 
-			var axisY = axisX.Cross(axisZ).Unit;
-			axisX = axisZ.Cross(axisY).Unit;
+			var axisY = Vector3.Cross(axisX, axisZ).normalized;
+			axisX = Vector3.Cross(axisZ, axisY).normalized;
 			var start = NoTexVertex(s);
 			var end = NoTexVertex(e);
 			var polygons = new List<Polygon>();
 
-			Func<double, double, double, Vertex> point = (stack, slice, radius) =>
+			Func<float, float, float, Vertex> point = (stack, slice, radius) =>
 			{
-				var angle = slice * Math.PI * alpha / 180;
-				var outp = axisX * (Math.Cos(angle)) + (axisY * (Math.Sin(angle)));
+				var angle = slice * Mathf.PI * alpha / 180;
+				var outp = axisX * (Mathf.Cos(angle)) + (axisY * (Mathf.Sin(angle)));
 				var pos = s + (ray * (stack)) + (outp * (radius));
 				return NoTexVertex(pos);
 			};
@@ -175,8 +176,8 @@ namespace Csg
 			{
 				for (var i = 0; i < slices; i++)
 				{
-					double t0 = (double)i / slices;
-					double t1 = (double)(i + 1) / slices;
+					float t0 = (float)i / slices;
+					float t1 = (float)(i + 1) / slices;
 					if (rEnd == rStart)
 					{
 						polygons.Add(new Polygon(start, point(0, t0, rEnd), point(0, t1, rEnd)));
@@ -207,10 +208,10 @@ namespace Csg
 	        return result;
 	    }
 
-		public static Solid Cylinder(double r, double h, bool center = false)
+		public static Solid Cylinder(float r, float h, bool center = false)
 		{
-			var start = center ? new Vector3D(0, -h / 2, 0) : new Vector3D(0, 0, 0);
-			var end = center ? new Vector3D(0, h / 2, 0) : new Vector3D(0, h, 0);
+			var start = center ? new Vector3(0, -h / 2, 0) : new Vector3(0, 0, 0);
+			var end = center ? new Vector3(0, h / 2, 0) : new Vector3(0, h, 0);
 			return Cylinder(new CylinderOptions { Start = start, End = end, RadiusStart = r, RadiusEnd = r, });
 		}
 
@@ -264,7 +265,7 @@ namespace Csg
 			}
 		}
 
-		static Vertex NoTexVertex (Vector3D pos) => new Vertex (pos, new Vector2D (0, 0));
+		static Vertex NoTexVertex (Vector3 pos) => new Vertex (pos, new Vector2 (0, 0));
 
 		static readonly int[][][] cubeData =
 			{
@@ -297,27 +298,27 @@ namespace Csg
 
 	public class CubeOptions
 	{
-		public Vector3D Center;
-		public Vector3D Radius = new Vector3D(1, 1, 1);
+		public Vector3 Center;
+		public Vector3 Radius = new Vector3(1, 1, 1);
 	}
 
 	public class SphereOptions
 	{
-		public Vector3D XAxis = new Vector3D(1, 0, 0);
-		public Vector3D YAxis = new Vector3D(0, -1, 0);
-		public Vector3D ZAxis = new Vector3D(0, 0, 1);
-		public Vector3D Center;
-		public double Radius = 1;
+		public Vector3 XAxis = new Vector3(1, 0, 0);
+		public Vector3 YAxis = new Vector3(0, -1, 0);
+		public Vector3 ZAxis = new Vector3(0, 0, 1);
+		public Vector3 Center;
+		public float Radius = 1;
 		public int Resolution = Solid.DefaultResolution3D;
 	}
 
 	public class CylinderOptions
 	{
-		public Vector3D Start;
-		public Vector3D End;
-		public double RadiusStart = 1;
-		public double RadiusEnd = 1;
-		public double SectorAngle = 360;
+		public Vector3 Start;
+		public Vector3 End;
+		public float RadiusStart = 1;
+		public float RadiusEnd = 1;
+		public float SectorAngle = 360;
 		public int Resolution = Solid.DefaultResolution3D;
 	}
 }

@@ -1,16 +1,18 @@
-﻿namespace Csg
+﻿using UnityEngine;
+
+namespace Csg
 {
     public class Vertex
     {
         /// <summary>
         /// The world position of this vertex.
         /// </summary>
-        public readonly Vector3D Pos;
+        public readonly Vector3 Pos;
 
         /// <summary>
         /// The texture coordinate of this vertex.
         /// </summary>
-		public readonly Vector2D Tex;
+		public readonly Vector2 Tex;
 
         int tag = 0;
 
@@ -19,7 +21,7 @@
         /// </summary>
         /// <param name="pos">World position</param>
         /// <param name="tex">Texture coordinate</param>
-        public Vertex(Vector3D pos, Vector2D tex)
+        public Vertex(Vector3 pos, Vector2 tex)
         {
             Pos = pos;
 			Tex = tex;
@@ -59,7 +61,7 @@
         /// <param name="matrix4x4">The transformation.</param>
         public Vertex Transform(Matrix4x4 matrix4x4)
         {
-            var newpos = Pos * matrix4x4;
+            var newpos = matrix4x4 * Pos;
             return new Vertex(newpos, Tex);
         }
     }

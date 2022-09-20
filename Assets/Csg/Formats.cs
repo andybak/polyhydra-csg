@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using UnityEngine;
 
 namespace Csg
 {
@@ -44,14 +45,14 @@ namespace Csg
 			}
 		}
 
-		public static string ToStlString(this Vector3D vector)
+		public static string ToStlString(this Vector3 vector)
 		{
-			return string.Format(icult, "{0} {1} {2}", vector.X, vector.Y, vector.Z);
+			return string.Format(icult, "{0} {1} {2}", vector.x, vector.y, vector.z);
 		}
 
 		public static string ToStlString(this Vertex vertex)
 		{
-			return string.Format(icult, "vertex {0} {1} {2}", vertex.Pos.X, vertex.Pos.Y, vertex.Pos.Z);
+			return string.Format(icult, "vertex {0} {1} {2}", vertex.Pos.x, vertex.Pos.y, vertex.Pos.z);
 		}
 	}
 }

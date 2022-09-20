@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Csg
 {
@@ -45,7 +46,8 @@ namespace Csg
 				var n = csgs[i - 1].UnionSub(csgs[i], false, false);
 				csgs.Add(n);
 			}
-			return csgs[i - 1].Retesselated().Canonicalized();
+			// return csgs[i - 1].Retesselated().Canonicalized();
+            return csgs[i - 1].Retesselated().Canonicalized();
 		}
 
 		Solid UnionSub(Solid csg, bool retesselate, bool canonicalize)
@@ -143,7 +145,9 @@ namespace Csg
 
 		public Solid Transform(Matrix4x4 matrix4x4)
 		{
-			var ismirror = matrix4x4.IsMirroring;
+            // Always false
+			////var ismirror = matrix4x4.IsMirroring;
+            var ismirror = false;
 			var transformedvertices = new Dictionary<int, Vertex>();
 			var transformedplanes = new Dictionary<int, Plane>();
 			var newpolygons = new List<Polygon>();
@@ -179,29 +183,29 @@ namespace Csg
 			return result;
 		}
 
-		public Solid Translate(Vector3D offset)
+		public Solid Translate(Vector3 offset)
 		{
-			return Transform(Matrix4x4.Translation(offset));
+			return Transform(Matrix4x4.Translate(offset));
 		}
 
-		public Solid Translate(double x = 0, double y = 0, double z = 0)
+		public Solid Translate(float x = 0, float y = 0, float z = 0)
 		{
-			return Transform(Matrix4x4.Translation(new Vector3D(x, y, z)));
+			return Transform(Matrix4x4.Translate(new Vector3(x, y, z)));
 		}
 
-		public Solid Scale(Vector3D scale)
+		public Solid Scale(Vector3 scale)
 		{
-			return Transform(Matrix4x4.Scaling(scale));
+			return Transform(Matrix4x4.Scale(scale));
 		}
 
-		public Solid Scale(double scale)
+		public Solid Scale(float scale)
 		{
-			return Transform(Matrix4x4.Scaling(new Vector3D(scale, scale, scale)));
+			return Transform(Matrix4x4.Scale(new Vector3(scale, scale, scale)));
 		}
 
-		public Solid Scale(double x, double y, double z)
+		public Solid Scale(float x, float y, float z)
 		{
-			return Transform(Matrix4x4.Scaling(new Vector3D(x, y, z)));
+			return Transform(Matrix4x4.Scale(new Vector3(x, y, z)));
 		}
 
 		Solid Canonicalized()
@@ -221,11 +225,15 @@ namespace Csg
 
 		Solid Retesselated()
 		{
-			if (IsRetesselated)
+            // TODO
+            return this;
+
+            if (IsRetesselated)
 			{
 				return this;
 			}
-			else {
+			else
+            {
 				var csg = this;
 				var polygonsPerPlane = new Dictionary<PolygonsPerPlaneKey, List<Polygon>>(polygonsPerPlaneKeyComparer);
 				var isCanonicalized = csg.IsCanonicalized;
@@ -315,8 +323,8 @@ namespace Csg
 			{
 				if (cachedBoundingBox == null)
 				{
-					var minpoint = new Vector3D(0, 0, 0);
-					var maxpoint = new Vector3D(0, 0, 0);
+					var minpoint = new Vector3(0, 0, 0);
+					var maxpoint = new Vector3(0, 0, 0);
 					var polygons = this.Polygons;
 					var numpolygons = polygons.Count;
 					for (var i = 0; i < numpolygons; i++)
@@ -329,8 +337,8 @@ namespace Csg
 							maxpoint = bounds.Max;
 						}
 						else {
-							minpoint = minpoint.Min(bounds.Min);
-							maxpoint = maxpoint.Max(bounds.Max);
+							minpoint = Utils.Min(minpoint, bounds.Min);
+							maxpoint = Utils.Max(maxpoint, bounds.Max);
 						}
 					}
 					cachedBoundingBox = new BoundingBox(minpoint, maxpoint);
@@ -349,19 +357,19 @@ namespace Csg
 			{
 				var mybounds = Bounds;
 				var otherbounds = csg.Bounds;
-				if (mybounds.Max.X < otherbounds.Min.X) return false;
-				if (mybounds.Min.X > otherbounds.Max.X) return false;
-				if (mybounds.Max.Y < otherbounds.Min.Y) return false;
-				if (mybounds.Min.Y > otherbounds.Max.Y) return false;
-				if (mybounds.Max.Z < otherbounds.Min.Z) return false;
-				if (mybounds.Min.Z > otherbounds.Max.Z) return false;
+				if (mybounds.Max.x < otherbounds.Min.x) return false;
+				if (mybounds.Min.x > otherbounds.Max.x) return false;
+				if (mybounds.Max.y < otherbounds.Min.y) return false;
+				if (mybounds.Min.y > otherbounds.Max.y) return false;
+				if (mybounds.Max.z < otherbounds.Min.z) return false;
+				if (mybounds.Min.z > otherbounds.Max.z) return false;
 				return true;
 			}
 		}
 
 		static void RetesselateCoplanarPolygons(List<Polygon> sourcepolygons, List<Polygon> destpolygons)
 		{
-			var EPS = 1e-5;
+			var EPS = 1e-5f;
 
 			var numpolygons = sourcepolygons.Count;
 			if (numpolygons > 0)
@@ -371,16 +379,16 @@ namespace Csg
 				var orthobasis = new OrthoNormalBasis(plane);
 				var polygonvertices2d = new List<List<Vertex2D>>(); // array of array of Vertex2Ds
 				var polygontopvertexindexes = new List<int>(); // array of indexes of topmost vertex per polygon
-				var topy2polygonindexes = new Dictionary<double, List<int>>();
-				var ycoordinatetopolygonindexes = new Dictionary<double, HashSet<int>>();
+				var topy2polygonindexes = new Dictionary<float, List<int>>();
+				var ycoordinatetopolygonindexes = new Dictionary<float, HashSet<int>>();
 
-				//var xcoordinatebins = new Dictionary<double, double>();
-				var ycoordinatebins = new Dictionary<double, double>();
+				//var xcoordinatebins = new Dictionary<float, float>();
+				var ycoordinatebins = new Dictionary<float, float>();
 
 				// convert all polygon vertices to 2D
 				// Make a list of all encountered y coordinates
 				// And build a map of all polygons that have a vertex at a certain y coordinate:
-				var ycoordinateBinningFactor = 1.0 / EPS * 10;
+				var ycoordinateBinningFactor = 1.0f / EPS * 10;
 				for (var polygonindex = 0; polygonindex < numpolygons; polygonindex++)
 				{
 					var poly3d = sourcepolygons[polygonindex];
@@ -389,15 +397,15 @@ namespace Csg
 					var minindex = -1;
 					if (numvertices > 0)
 					{
-						double miny = 0, maxy = 0;
+						float miny = 0, maxy = 0;
 						//int maxindex;
 						for (var i = 0; i < numvertices; i++)
 						{
 							var pos2d = orthobasis.To2D(poly3d.Vertices[i].Pos);
 							// perform binning of y coordinates: If we have multiple vertices very
 							// close to each other, give them the same y coordinate:
-							var ycoordinatebin = Math.Floor(pos2d.Y * ycoordinateBinningFactor);
-							double newy;
+							var ycoordinatebin = Mathf.Floor(pos2d.y * ycoordinateBinningFactor);
+							float newy;
 							if (ycoordinatebins.ContainsKey(ycoordinatebin))
 							{
 								newy = ycoordinatebins[ycoordinatebin];
@@ -411,12 +419,12 @@ namespace Csg
 								newy = ycoordinatebins[ycoordinatebin - 1];
 							}
 							else {
-								newy = pos2d.Y;
-								ycoordinatebins[ycoordinatebin] = pos2d.Y;
+								newy = pos2d.y;
+								ycoordinatebins[ycoordinatebin] = pos2d.y;
 							}
-							pos2d = new Vector2D(pos2d.X, newy);
+							pos2d = new Vector2(pos2d.y, newy);
 							vertices2d.Add(new Vertex2D (pos2d, poly3d.Vertices[i].Tex));
-							var y = pos2d.Y;
+							var y = pos2d.y;
 							if ((i == 0) || (y < miny))
 							{
 								miny = y;
@@ -454,7 +462,7 @@ namespace Csg
 					polygonvertices2d.Add(vertices2d);
 					polygontopvertexindexes.Add(minindex);
 				}
-				var ycoordinates = new List<double>();
+				var ycoordinates = new List<float>();
 				foreach (var ycoordinate in ycoordinatetopolygonindexes) ycoordinates.Add(ycoordinate.Key);
 				ycoordinates.Sort();
 
@@ -499,12 +507,12 @@ namespace Csg
 							{
 								var nextleftvertexindex = newleftvertexindex + 1;
 								if (nextleftvertexindex >= numvertices) nextleftvertexindex = 0;
-								if (vertices2d[nextleftvertexindex].Pos.Y != ycoordinate) break;
+								if (vertices2d[nextleftvertexindex].Pos.y != ycoordinate) break;
 								newleftvertexindex = nextleftvertexindex;
 							}
 							var nextrightvertexindex = newrightvertexindex - 1;
 							if (nextrightvertexindex < 0) nextrightvertexindex = numvertices - 1;
-							if (vertices2d[nextrightvertexindex].Pos.Y == ycoordinate)
+							if (vertices2d[nextrightvertexindex].Pos.y == ycoordinate)
 							{
 								newrightvertexindex = nextrightvertexindex;
 							}
@@ -529,17 +537,17 @@ namespace Csg
 							}
 						} // if polygon has corner here
 					} // for activepolygonindex
-					double nextycoordinate;
+					float nextycoordinate;
 					if (yindex >= ycoordinates.Count - 1)
 					{
 						// last row, all polygons must be finished here:
 						activepolygons = new List<RetesselateActivePolygon>();
-						nextycoordinate = 0.0;
+						nextycoordinate = 0.0f;
 					}
 					else // yindex < ycoordinates.length-1
 					{
 						nextycoordinate = ycoordinates[yindex + 1];
-						var middleycoordinate = 0.5 * (ycoordinate + nextycoordinate);
+						var middleycoordinate = 0.5f * (ycoordinate + nextycoordinate);
 						// update activepolygons by adding any polygons that start here:
 						List<int> startingpolygonindexes;
 						if (topy2polygonindexes.TryGetValue(ycoordinate, out startingpolygonindexes))
@@ -556,7 +564,7 @@ namespace Csg
 								{
 									var i = topleftvertexindex + 1;
 									if (i >= numvertices) i = 0;
-									if (vertices2d[i].Pos.Y != ycoordinate) break;
+									if (vertices2d[i].Pos.y != ycoordinate) break;
 									if (i == topvertexindex) break; // should not happen, but just to prevent endless loops
 									topleftvertexindex = i;
 								}
@@ -565,7 +573,7 @@ namespace Csg
 								{
 									var i = toprightvertexindex - 1;
 									if (i < 0) i = numvertices - 1;
-									if (vertices2d[i].Pos.Y != ycoordinate) break;
+									if (vertices2d[i].Pos.y != ycoordinate) break;
 									if (i == topleftvertexindex) break; // should not happen, but just to prevent endless loops
 									toprightvertexindex = i;
 								}
@@ -629,8 +637,8 @@ namespace Csg
 							if (newoutpolygonrow.Count > 0)
 							{
 								var prevoutpolygon = newoutpolygonrow[newoutpolygonrow.Count - 1];
-								var d1 = outpolygon.topleft.Pos.DistanceTo(prevoutpolygon.topright.Pos);
-								var d2 = outpolygon.bottomleft.Pos.DistanceTo(prevoutpolygon.bottomright.Pos);
+								var d1 = (outpolygon.topleft.Pos - prevoutpolygon.topright.Pos).magnitude;
+								var d2 = (outpolygon.bottomleft.Pos - prevoutpolygon.bottomright.Pos).magnitude;
 								if ((d1 < EPS) && (d2 < EPS))
 								{
 									// we can join this polygon with the one to the left:
@@ -657,15 +665,15 @@ namespace Csg
 											// We have a match if the sidelines are equal or if the top coordinates
 											// are on the sidelines of the previous polygon
 											var prevpolygon = prevoutpolygonrow[ii];
-											if (prevpolygon.leftline != null && prevpolygon.rightline != null && prevpolygon.bottomleft.Pos.DistanceTo (thispolygon.topleft.Pos) < EPS) {
-												if (prevpolygon.bottomright.Pos.DistanceTo (thispolygon.topright.Pos) < EPS) {
+											if (prevpolygon.leftline != null && prevpolygon.rightline != null && (prevpolygon.bottomleft.Pos - thispolygon.topleft.Pos).magnitude < EPS) {
+												if ((prevpolygon.bottomright.Pos - thispolygon.topright.Pos).magnitude < EPS) {
 													// Yes, the top of this polygon matches the bottom of the previous:
 													matchedindexes.Add (ii);
 													// Now check if the joined polygon would remain convex:
-													var d1 = thispolygon.leftline.Direction.X - prevpolygon.leftline.Direction.X;
-													var d2 = thispolygon.rightline.Direction.X - prevpolygon.rightline.Direction.X;
-													var leftlinecontinues = Math.Abs (d1) < EPS;
-													var rightlinecontinues = Math.Abs (d2) < EPS;
+													var d1 = thispolygon.leftline.Direction.x - prevpolygon.leftline.Direction.x;
+													var d2 = thispolygon.rightline.Direction.y - prevpolygon.rightline.Direction.x;
+													var leftlinecontinues = Mathf.Abs(d1) < EPS;
+													var rightlinecontinues = Mathf.Abs(d2) < EPS;
 													var leftlineisconvex = leftlinecontinues || (d1 >= 0);
 													var rightlineisconvex = rightlinecontinues || (d2 >= 0);
 													if (leftlineisconvex && rightlineisconvex) {
@@ -693,7 +701,7 @@ namespace Csg
 									if (prevpolygon.outpolygon == null)
 										continue;
 									prevpolygon.outpolygon.rightpoints.Add(prevpolygon.bottomright);
-									if (prevpolygon.bottomright.Pos.DistanceTo(prevpolygon.bottomleft.Pos) > EPS)
+									if ((prevpolygon.bottomright.Pos - prevpolygon.bottomleft.Pos).magnitude > EPS)
 									{
 										// polygon ends with a horizontal line:
 										prevpolygon.outpolygon.leftpoints.Add(prevpolygon.bottomleft);
@@ -722,7 +730,7 @@ namespace Csg
 								// polygon starts here:
 								thispolygon.outpolygon = new RetesselateOutPolygon ();
 								thispolygon.outpolygon.leftpoints.Add(thispolygon.topleft);
-								if (thispolygon.topleft.Pos.DistanceTo(thispolygon.topright.Pos) > EPS)
+								if ((thispolygon.topleft.Pos - thispolygon.topright.Pos).magnitude > EPS)
 								{
 									// we have a horizontal line at the top:
 									thispolygon.outpolygon.rightpoints.Add(thispolygon.topright);
@@ -766,34 +774,34 @@ namespace Csg
 			array.Insert(leftbound, element);
 		}
 
-		static Vertex2DInterpolation InterpolateBetween2DPointsForY (Vertex2D vertex1, Vertex2D vertex2, double y)
+		static Vertex2DInterpolation InterpolateBetween2DPointsForY (Vertex2D vertex1, Vertex2D vertex2, float y)
 		{
 			var point1 = vertex1.Pos;
 			var point2 = vertex2.Pos;
-			var f1 = y - point1.Y;
-			var f2 = point2.Y - point1.Y;
+			var f1 = y - point1.y;
+			var f2 = point2.y - point1.y;
 			if (f2 < 0)
 			{
 				f1 = -f1;
 				f2 = -f2;
 			}
-			double t;
+			float t;
 			if (f1 <= 0)
 			{
-				t = 0.0;
+				t = 0.0f;
 			}
 			else if (f1 >= f2)
 			{
-				t = 1.0;
+				t = 1.0f;
 			}
 			else if (f2 < 1e-10)
 			{
-				t = 0.5;
+				t = 0.5f;
 			}
 			else {
 				t = f1 / f2;
 			}
-			var result = point1.X + t * (point2.X - point1.X);
+			var result = point1.x + t * (point2.x - point1.x);
 			return new Vertex2DInterpolation {
 				Result = result,
 				Tex = vertex1.Tex + (vertex2.Tex - vertex1.Tex) * t,
@@ -802,8 +810,8 @@ namespace Csg
 
 		struct Vertex2DInterpolation
 		{
-			public double Result;
-			public Vector2D Tex;
+			public float Result;
+			public Vector2 Tex;
 		}
 
 		/// <summary>
@@ -812,16 +820,16 @@ namespace Csg
 		/// </summary>
 		struct Vertex2D
 		{
-			public Vector2D Pos;
-			public Vector2D Tex;
-			public Vertex2D (Vector2D pos, Vector2D tex)
+			public Vector2 Pos;
+			public Vector2 Tex;
+			public Vertex2D (Vector2 pos, Vector2 tex)
 			{
 				Pos = pos;
 				Tex = tex;
 			}
-			public Vertex2D (double x, double y, Vector2D tex)
+			public Vertex2D (float x, float y, Vector2 tex)
 			{
-				Pos = new Vector2D (x, y);
+				Pos = new Vector2 (x, y);
 				Tex = tex;
 			}
 		}
@@ -857,8 +865,8 @@ namespace Csg
 
 	class FuzzyCsgFactory
 	{
-		readonly VertexFactory vertexfactory = new VertexFactory (1.0e-5);
-		readonly PlaneFactory planefactory = new PlaneFactory(1.0e-5);
+		readonly VertexFactory vertexfactory = new VertexFactory (1.0e-5f);
+		readonly PlaneFactory planefactory = new PlaneFactory(1.0e-5f);
 		readonly Dictionary<string, PolygonShared> polygonsharedfactory = new Dictionary<string, PolygonShared>();
 
 		public PolygonShared GetPolygonShared(PolygonShared sourceshared)
@@ -940,19 +948,19 @@ namespace Csg
 	{
 		static readonly KeyComparer keyComparer = new KeyComparer ();
 		readonly Dictionary<Key, Vertex> lookuptable = new Dictionary<Key, Vertex> (keyComparer);
-		readonly double multiplier;
-		public VertexFactory (double tolerance)
+		readonly float multiplier;
+		public VertexFactory (float tolerance)
 		{
-			multiplier = 1.0 / tolerance;
+			multiplier = 1.0f / tolerance;
 		}
 		public Vertex LookupOrCreate (ref Vertex vertex)
 		{
 			var key = new Key {
-				X = (int)(vertex.Pos.X * multiplier + 0.5),
-				Y = (int)(vertex.Pos.Y * multiplier + 0.5),
-				Z = (int)(vertex.Pos.Z * multiplier + 0.5),
-				U = (int)(vertex.Tex.X * multiplier + 0.5),
-				V = (int)(vertex.Tex.Y * multiplier + 0.5),
+				X = (int)(vertex.Pos.x * multiplier + 0.5),
+				Y = (int)(vertex.Pos.y * multiplier + 0.5),
+				Z = (int)(vertex.Pos.z * multiplier + 0.5),
+				U = (int)(vertex.Tex.x * multiplier + 0.5),
+				V = (int)(vertex.Tex.y * multiplier + 0.5),
 			};
 			if (lookuptable.TryGetValue (key, out var v))
 				return v;
@@ -987,17 +995,17 @@ namespace Csg
 	{
 		static readonly KeyComparer keyComparer = new KeyComparer ();
 		readonly Dictionary<Key, Plane> lookuptable = new Dictionary<Key, Plane> (keyComparer);
-		readonly double multiplier;
-		public PlaneFactory (double tolerance)
+		readonly float multiplier;
+		public PlaneFactory (float tolerance)
 		{
-			multiplier = 1.0 / tolerance;
+			multiplier = 1.0f / tolerance;
 		}
 		public Plane LookupOrCreate (Plane plane)
 		{
 			var key = new Key {
-				X = (int)(plane.Normal.X * multiplier + 0.5),
-				Y = (int)(plane.Normal.Y * multiplier + 0.5),
-				Z = (int)(plane.Normal.Z * multiplier + 0.5),
+				X = (int)(plane.Normal.x * multiplier + 0.5),
+				Y = (int)(plane.Normal.y * multiplier + 0.5),
+				Z = (int)(plane.Normal.z * multiplier + 0.5),
 				W = (int)(plane.W * multiplier + 0.5),
 			};
 			if (lookuptable.TryGetValue (key, out var p))

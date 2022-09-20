@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Csg
 {
@@ -355,7 +356,7 @@ namespace Csg
 				var sphereradius = bound.Radius + 1.0e-4;
 				var planenormal = plane.Normal;
 				var spherecenter = bound.Center;
-				var d = planenormal.Dot(spherecenter) - plane.W;
+				var d = Vector3.Dot(planenormal, spherecenter) - plane.W;
 				if (d > sphereradius)
 				{
 					if (frontnodes == null) frontnodes = new PolygonTreeNodeList();

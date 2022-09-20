@@ -4,7 +4,6 @@ using System.Linq;
 using Csg;
 using Polyhydra.Core;
 using UnityEngine;
-using Matrix4x4 = Csg.Matrix4x4;
 using Vertex = Csg.Vertex;
 
 [ExecuteInEditMode]
@@ -72,7 +71,7 @@ public class CsgTest : TestBase
             int firstVertIndex = vertices.Count;
             foreach (var v in poly.Vertices)
             {
-                vertices.Add(new Vector3((float)v.Pos.X, (float)v.Pos.Y, (float)v.Pos.Z));
+                vertices.Add(new Vector3((float)v.Pos.x, (float)v.Pos.y, (float)v.Pos.z));
             }
             faces.Add(Enumerable.Range(firstVertIndex, poly.Vertices.Count).ToList());
         }
@@ -90,7 +89,7 @@ public class CsgTest : TestBase
         Build();
     }
     
-    static Vertex NoTexVertex (Vector3D pos) => new Vertex (pos, new Vector2D (0, 0));
+    static Vertex NoTexVertex (Vector3 pos) => new Vertex (pos, new Vector2 (0, 0));
 
     public Solid FromPoly(PolyMesh poly, Vector3 pos, Vector3 rot, Vector3 scale)
     {
@@ -100,7 +99,7 @@ public class CsgTest : TestBase
             Polygon polygon = new Polygon(
                 face.GetVertices().Select(v=>
                 {
-                    return NoTexVertex(new Vector3D(
+                    return NoTexVertex(new Vector3(
                         v.Position.x + pos.x,
                         v.Position.y + pos.y,
                         v.Position.z + pos.z
@@ -109,10 +108,8 @@ public class CsgTest : TestBase
             polygons.Add(polygon);
         }
         var result = Solid.FromPolygons(polygons);
-        result = result.Transform(Matrix4x4.RotationX(rot.x));
-        result = result.Transform(Matrix4x4.RotationY(rot.y));
-        result = result.Transform(Matrix4x4.RotationZ(rot.z));
-        result = result.Transform(Matrix4x4.Scaling(new Vector3D(scale.x, scale.y, scale.z)));
+        result = result.Transform(Matrix4x4.Rotate(Quaternion.Euler(rot.x, rot.y, rot.z)));
+        result = result.Transform(Matrix4x4.Scale(new Vector3(scale.x, scale.y, scale.z)));
         return result;
     }
 }
